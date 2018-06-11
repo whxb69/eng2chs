@@ -5,7 +5,6 @@ getip和readip分别用于获取ip和读取ip用于爬虫防止被谷歌封禁<b
 可通过pip安装使用<br> 
 >pip install eng2chs
 
---------------------------------
 # demo
 >from eng2chs import go<br>
 
