@@ -71,7 +71,7 @@ class Py4Js:
 
 
 class tfunction():
-    def trans(self, temp):
+    def trans(self, temp, pro):
         if type(temp) != str:
             return 'content should be str'
 
@@ -121,10 +121,15 @@ class tfunction():
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
             proxies = readip.readip()
             try:
-                if proxies:
-                    requests.adapters.DEFAULT_RETRIES = 5
-                    response = requests.get(url=url, headers=headers, allow_redirects = False, proxies = proxies)
-                    print('mode-proxy')
+                if pro == 1:
+                    try:
+                        requests.adapters.DEFAULT_RETRIES = 5
+                        response = requests.get(url=url, headers=headers, allow_redirects = False, proxies = proxies,timeout = 2)
+                        print('mode-proxy')
+                    except:
+                        print('超时 重新请求')
+                        response = requests.get(url=url, headers=headers, allow_redirects = False, proxies = proxies,timeout = 2)
+                        print('mode-proxy')
                 else:
                     response = requests.get(url=url, headers=headers, allow_redirects = False)
                 if response.status_code == 200:
@@ -134,28 +139,30 @@ class tfunction():
                     response.close()
                 if response.status_code == 302:
                     print('302')
-                    return self.trans(temp)
+                    getip.get_ip()
+                    time.sleep(2)
+                    return self.trans(temp,pro)
 
             except urllib.error.URLError as e:
                 print(e.reason)
-                return self.trans(temp)
+                return self.trans(temp,pro)
 
             except socket.timeout:
                 print("-----socket timout:", url)
-                return self.trans(temp)
+                return self.trans(temp,pro)
 
             except ConnectionAbortedError as e:
                 print(e)
-                return self.trans(temp)
+                return self.trans(temp,pro)
             except requests.exceptions.ProxyError as e:
                 print(e)
-                return self.trans(temp)
+                return self.trans(temp,pro)
             except requests.exceptions.SSLError as e:
                 print(e)
-                return self.trans(temp)
+                return self.trans(temp,pro)
             except:
                 print('unknown error')
-                return self.trans(temp)
+                return self.trans(temp,pro)
 
 
 
