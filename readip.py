@@ -2,8 +2,8 @@ import random
 from eng2chs import getip
 def readip():
     try:
-        getma = random.randint(0,10)
-        if getma == 5:
+        getma = random.randint(0,20)
+        if getma == 10:
             try:
                 getip.get_ip()
             except:
