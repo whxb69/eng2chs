@@ -10,4 +10,6 @@ getip和readip分别用于获取ip和读取ip用于爬虫防止被谷歌封禁<b
 
 >f_trans = go.tfunction()<br>
 >temp = 'Chinese'             #待翻译内容<br>
->String = f_trans.trans(temp)<br>
+>String = f_trans.trans(temp, 1, 'e2c')         <br>
+
+trans的参数依次为(翻译内容，是否启用代理，中译英或英译中)
