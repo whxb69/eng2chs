@@ -71,7 +71,7 @@ class Py4Js:
 
 
 class tfunction():
-    def trans(self, temp, pro):
+    def trans(self, temp, pro, mode):
         if type(temp) != str:
             return 'content should be str'
 
@@ -114,10 +114,17 @@ class tfunction():
             content = urllib.parse.quote(content)
             socket.setdefaulttimeout(20)
 
-            url = "https://translate.google.cn/translate_a/single?client=t" \
+            if mode == 'e2c':
+                url = "https://translate.google.cn/translate_a/single?client=t" \
                   "&sl=en&tl=zh-CN&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca" \
                   "&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&clearbtn=1&otf=1&pc=1" \
                   "&srcrom=0&ssel=0&tsel=0&kc=2&tk=%s&q=%s" % (tk, content)
+
+            elif mode == 'c2e':
+                url = "https://translate.google.cn/translate_a/single?client=t" \
+                     "&sl=zh-CN&tl=en&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca" \
+                     "&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&clearbtn=1&otf=1&ssel=0" \
+                     "&tsel=3&kc=2&tk=%s&q=%s" % (tk, content)
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
             proxies = readip.readip()
             try:
