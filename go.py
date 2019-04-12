@@ -6,6 +6,7 @@ import execjs
 import re
 import time
 from eng2chs import readip
+from eng2chs import getip
 import requests
 import socket
 
@@ -71,7 +72,7 @@ class Py4Js:
 
 
 class tfunction():
-    def trans(self, temp, pro, mode):
+    def trans(self, temp, pro = 1, mode = 'e2c'):
         if type(temp) != str:
             return 'content should be str'
 
