@@ -192,7 +192,7 @@ class tfunction():
                 if Searched == 1 and BraceCount == 2 and EndIndex - BeginIndex > 3:
                     Searched = 0
                     try:
-                        temp = result[i][BeginIndex:k + 1].split('","')[0].split('["')[1]
+                        temp = result[i].split('","')[0].replace('[','').replace('"','')
                         # print(temp, end='\n\n')
                         # print(result[i][BeginIndex:k+1])
                     except:
