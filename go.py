@@ -9,6 +9,9 @@ from eng2chs import readip
 from eng2chs import getip
 import requests
 import socket
+from fake_useragent import UserAgent
+import traceback
+from retrying import retry
 
 cgitb.enable()
 
@@ -22,6 +25,11 @@ cgitb.enable()
 
 
 '''
+
+try:
+    ua = UserAgent()
+except:
+    ua = UserAgent()
 
 
 class Py4Js:
@@ -72,132 +80,92 @@ class Py4Js:
 
 
 class tfunction():
-    def trans(self, temp, pro = 1, mode = 'e2c'):
-        if type(temp) != str:
+    def __init__(self):
+        self.js = Py4Js()
+
+    def trans(self, temp, pro=1, mode='e2c'):
+        if not isinstance(temp, str):
             return 'content should be str'
 
-        js = Py4Js()
-        reobj0 = re.compile(r'^\n',
-                            re.M)
-        ResultList = reobj0.split(temp)
-        temp = ''
-        for i in range(len(ResultList)):
-            temp += re.sub(r'\n', " ", ResultList[i])
-            temp += '\r\n\r\n'
-        origin = 0
-        last = 0
-        String = ''
-        i = -1
-        k = 0
-        n = 0
-        result = [""] * (round(len(temp) / 1200) + 1)
-        while i < len(temp):
-            i += 1
-            if i != len(temp):
-                if temp[i] == '.' or temp[i] == '?':
-                    if i - last < 1200:
-                        origin = i
-                        continue
-                    else:
-                        i = origin
-                        content = temp[last:origin]
-                        last = origin
-                else:
-                    if i - last >= 1200:
-                        i = origin
-                        content = temp[last:origin]
-                        last = origin
-                    else:
-                        continue
-            else:
-                content = temp[last:len(temp)]
-            tk = js.getTk(content)
-            content = urllib.parse.quote(content)
+        js = self.js
+
+        num = int(len(temp) / 1200) + 1
+        results = [temp[i*1200:(i+1)*1200] for i in range(num)]
+        reslist = [''] * len(results)
+        alllist = []
+        pat_w = re.compile('\w')
+        for i in range(len(results)):
+            flag = pat_w.match(results[i][-1])
+            if flag:
+                pat_ws = re.compile("[^\w\s']")
+                bpoint = pat_ws.search(results[i+1]).regs[0][1]
+                results[i] = results[i] + ' ' + results[i+1][:bpoint]
+                results[i+1] = results[i+1][bpoint:]
+
+
+        for index,result in enumerate(results):
+            tk = js.getTk(result)
+            content = urllib.parse.quote(result)
             socket.setdefaulttimeout(20)
 
             if mode == 'e2c':
                 url = "https://translate.google.cn/translate_a/single?client=t" \
-                  "&sl=en&tl=zh-CN&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca" \
-                  "&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&clearbtn=1&otf=1&pc=1" \
-                  "&srcrom=0&ssel=0&tsel=0&kc=2&tk=%s&q=%s" % (tk, content)
+                      "&sl=en&tl=zh-CN&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca" \
+                      "&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&clearbtn=1&otf=1&pc=1" \
+                      "&srcrom=0&ssel=0&tsel=0&kc=2&tk=%s&q=%s" % (tk, content)
 
             elif mode == 'c2e':
                 url = "https://translate.google.cn/translate_a/single?client=t" \
-                     "&sl=zh-CN&tl=en&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca" \
-                     "&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&clearbtn=1&otf=1&ssel=0" \
-                     "&tsel=3&kc=2&tk=%s&q=%s" % (tk, content)
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
-            proxies = readip.readip()
+                      "&sl=zh-CN&tl=en&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca" \
+                      "&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&clearbtn=1&otf=1&ssel=0" \
+                      "&tsel=3&kc=2&tk=%s&q=%s" % (tk, content)
+            headers = {'User-Agent': ua.random}
             try:
                 if pro == 1:
-                    try:
-                        requests.adapters.DEFAULT_RETRIES = 5
-                        response = requests.get(url=url, headers=headers, allow_redirects = False, proxies = proxies,timeout = 2)
-                        print('mode-proxy')
-                    except:
-                        print('超时 重新请求')
-                        response = requests.get(url=url, headers=headers, allow_redirects = False, proxies = proxies,timeout = 2)
-                        print('mode-proxy')
+                    response = self.req(url)
                 else:
-                    response = requests.get(url=url, headers=headers, allow_redirects = False)
-                if response.status_code == 200:
-                    result[k] = response.text
-                    k = k + 1
+                    response = requests.get(url=url, headers=headers, allow_redirects=False)
 
+                if response.status_code == 200:
+                    results[index] = response.text
+                    # k = k + 1
                     response.close()
                 if response.status_code == 302:
-                    print('302')
+                    print('reaponse 302 2秒后继续')
                     getip.get_ip()
                     time.sleep(2)
-                    return self.trans(temp,pro)
-
-            except urllib.error.URLError as e:
-                print(e.reason)
-                return self.trans(temp,pro)
-
-            except socket.timeout:
-                print("-----socket timout:", url)
-                return self.trans(temp,pro)
-
-            except ConnectionAbortedError as e:
-                print(e)
-                return self.trans(temp,pro)
-            except requests.exceptions.ProxyError as e:
-                print(e)
-                return self.trans(temp,pro)
-            except requests.exceptions.SSLError as e:
-                print(e)
-                return self.trans(temp,pro)
+                    return self.trans(temp, pro, mode)
             except:
-                print('unknown error')
-                return self.trans(temp,pro)
+                print(traceback.print_exc())
+                return self.trans(temp, pro, mode)
+
+            res = self.setres(results[index].replace('null',"'null'"))
+            tres_l = res[0]
+            reslist[index] = ''
+            for t in tres_l:
+                if t[0] != 'null':
+                    reslist[index] += t[0]
+                    alllist.append(t[0])
 
 
+        return ('').join(reslist),alllist
 
+    @retry(stop_max_attempt_number=3)
+    def getproxy(self):
+        return readip.readip()
 
-        BraceCount = 2
-        Searched = 0
-        BeginIndex = 0
-        EndIndex = 0
-        for i in range(0, round(len(temp) / 1200) + 1):
-            for k in range(2, len(result[i])):
-                if result[i][k] == '[':
-                    BraceCount += 1
-                    Searched = 1
-                    BeginIndex = k
-                if result[i][k] == ']':
-                    BraceCount -= 1
-                    Searched = 1
-                    EndIndex = k
-                if Searched == 1 and BraceCount == 2 and EndIndex - BeginIndex > 3:
-                    Searched = 0
-                    try:
-                        temp = result[i].split('","')[0].replace('[','').replace('"','')
-                        # print(temp, end='\n\n')
-                        # print(result[i][BeginIndex:k+1])
-                    except:
-                        break
-                    String += temp
-        String = String.replace("\\r\\n", "\n")
-        return String
+    @retry(stop_max_attempt_number=5)
+    def req(self, url):
+        proxies = self.getproxy()
+        headers = {'User-Agent': ua.random}
+        response = requests.get(url=url, headers=headers, allow_redirects=False, timeout=2)
+        return response
+
+    def setres(self,inputs):
+        try:
+            return eval(inputs)
+        except NameError as e:
+            key = re.compile("'\w+'").search(e.args[0]).group().strip("\\'")
+            inputs_n = inputs.replace(key,"'%s'"%key)
+            return self.setres(inputs_n)
 
