@@ -89,8 +89,8 @@ class tfunction():
 
         js = self.js
 
-        num = int(len(temp) / 1200) + 1
-        results = [temp[i*1200:(i+1)*1200] for i in range(num)]
+        num = int(len(temp) / 4500) + 1
+        results = [temp[i*4500:(i+1)*4500] for i in range(num)]
         reslist = [''] * len(results)
         alllist = []
         pat_w = re.compile('\w')
